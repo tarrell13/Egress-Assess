@@ -24,6 +24,11 @@ def cli_parser():
         '-h', '-?', '--h', '-help', '--help', action="store_true",
         help=argparse.SUPPRESS)
 
+    automation = parser.add_argument_group("Automation Options")
+    automation.add_argument("--negotiation", help="Automates testing by configuring each specified protocol and"
+                                                 "exchanging information with between client/server",
+                           action="store_true", default=False)
+
     protocols = parser.add_argument_group('Client Protocol Options')
     protocols.add_argument(
         "--client", default=None, metavar="[http]",

@@ -4,3 +4,5 @@
 *.pem
 data/
 *.swp
+.idea/
+development-notes.txt

@@ -8,8 +8,30 @@
 
 import logging
 import sys
+import threading
+import requests
 from common import helpers
 from common import orchestra
+from common.negotiation import Negotiation
+import re
+
+def parse_protocols(arguments):
+
+    server_protocols = []
+
+    if re.search(",",arguments.server):
+        temp = arguments.server.split(",")
+
+        for full_path, server in the_conductor.server_protocols.iteritems():
+            if server.protocol in temp and server.protocol not in server_protocols:
+                server_protocols.append(server)
+    else:
+
+        for full_path, server in the_conductor.server_protocols.iteritems():
+            if server.protocol == arguments.server.lower():
+                server_protocols.append(server)
+
+    return server_protocols
 
 
 if __name__ == "__main__":
@@ -21,6 +43,7 @@ if __name__ == "__main__":
     cli_parsed = helpers.cli_parser()
 
     the_conductor = orchestra.Conductor()
+
 
     # Check if only listing supported server/client protocols or datatypes
     if cli_parsed.list_servers:
@@ -60,6 +83,12 @@ if __name__ == "__main__":
     if cli_parsed.server is not None:
         the_conductor.load_server_protocols(cli_parsed)
         the_conductor.load_actors(cli_parsed)
+        server_protocols = parse_protocols(cli_parsed)
+
+        if cli_parsed.negotiation is True:
+            server_api = Negotiation(cli_parsed,protocols=server_protocols)
+            api_thread = threading.Thread(target=server_api.start)
+            api_thread.start()
 
         # Check if server module is given threat actor vs. normal server
         for actor_path, actor_mod in the_conductor.actor_modules.iteritems():
@@ -73,12 +102,18 @@ if __name__ == "__main__":
                     if server_actor.protocol.lower() == actor_mod.server_requirement:
                         server_actor.serve()
 
+        threads = [None] * len(server_protocols)
 
-        for full_path, server in the_conductor.server_protocols.iteritems():
-
-            if server.protocol == cli_parsed.server.lower():
-                server.serve()
-                helpers.class_info()
+        for i in range(len(server_protocols)):
+            for full_path, server in the_conductor.server_protocols.iteritems():
+                if server.protocol == server_protocols[i].protocol:
+                    if cli_parsed.negotiation:
+                        threads[i] = threading.Thread(target=server.negotiatedServe,args=())
+                        threads[i].start()
+                        requests.get("http://localhost:5000/checkin-status?protocol=%s" %server_protocols[i].protocol)
+                    else:
+                        server.serve()
+                        helpers.class_info()
 
     elif cli_parsed.client is not None:
         # load up all supported client protocols and datatypes

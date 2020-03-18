@@ -62,8 +62,39 @@ def setFileName():
 class Server:
     def __init__(self, cli_object):
         self.protocol = "dns"
+        self.arguments = cli_object
         self.servers = []
 
+
+    def negotiatedServe(self):
+
+        setFileName()
+
+        if not os.path.isdir(LOOT_PATH):
+            os.makedirs(LOOT_PATH)
+
+        self.servers = [
+            SocketServer.ThreadingUDPServer(('', 53), UDPRequestHandler),
+        ]
+        for s in self.servers:
+            # that thread will start one more thread for each request
+            thread = threading.Thread(target=s.serve_forever)
+            # exit the server thread when the main thread terminates
+            thread.daemon = True
+            thread.start()
+
+        try:
+            while 1:
+                time.sleep(0.5)
+                sys.stderr.flush()
+                sys.stdout.flush()
+
+        except KeyboardInterrupt:
+            pass
+
+        finally:
+            for s in self.servers:
+                s.shutdown()
 
     def startDnsServers(self):
        self.servers = [
@@ -101,6 +132,7 @@ class Server:
                 s.shutdown()
 
         return
+
 
 class BaseRequestHandler(SocketServer.BaseRequestHandler):
 
