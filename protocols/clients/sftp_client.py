@@ -33,6 +33,49 @@ class Client:
             else:
                 self.file_transfer = cli_object.file
 
+
+    def negotiatedTransmit(self, data_to_transmit,config=None):
+
+        if config:
+            self.username = config["sftp"]["username"]
+            self.password = config["sftp"]["password"]
+            self.port = int(config["sftp"]["port"])
+
+        print "[+] Sending SFTP Data"
+
+        if not self.file_transfer:
+            sftp_file_name = helpers.writeout_text_data(data_to_transmit)
+            full_path = helpers.ea_path() + "/" + sftp_file_name
+
+            transport = paramiko.Transport((self.remote_system, self.port))
+            transport.connect(username=self.username, password=self.password)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            sftp.put(full_path, '/' + sftp_file_name)
+
+            # close sftp connection
+            sftp.close()
+            transport.close()
+
+            os.remove(sftp_file_name)
+        else:
+            transport = paramiko.Transport((self.remote_system, self.port))
+            transport.connect(username=self.username, password=self.password)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            if "/" in self.file_transfer:
+                sftp.put(self.file_transfer, '/' + self.file_transfer.split("/")[-1])
+            else:
+                sftp.put(self.file_transfer, '/' + self.file_transfer)
+
+            # close sftp connection
+            sftp.close()
+            transport.close()
+
+        print "[*] Data sent!"
+
+        return
+
+
+
     def transmit(self, data_to_transmit):
 
         print "[*] Transmitting data..."

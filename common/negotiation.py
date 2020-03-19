@@ -41,7 +41,6 @@ class Negotiation(object):
 
         for proto in self.protocols:
             password = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(12)])
-
             # Configure each protocol values depending Protocols being tested
             if proto.protocol.lower() == "ftp":
 
@@ -55,8 +54,14 @@ class Negotiation(object):
 
             elif proto.protocol.lower() == "smb":
 
-                if data["smb"]["password"] == "null":
+                if data["smb"]["password"] == "null" and data["smb"]["username"] == "null":
+                    print("here")
+                    data["smb"]["username"] = "null"
+                    data["smb"]["password"] = "null"
+
+                elif data["smb"]["password"] == "null" and data["smb"]["username"] != "null":
                     data["smb"]["password"] = password
+
                 if data["smb"]["smb2"] == "True":
                     proto.smb2support = True
 
@@ -86,6 +91,7 @@ class Negotiation(object):
 
             elif proto.protocol.lower() == "dns":
                 data["dns"]["enabled"] = "True"
+                data["dns_resolved"]["enabled"] = "True"
 
             elif proto.protocol.lower() == "smtp":
                 proto.port = int(data["smtp"]["port"])
@@ -98,9 +104,7 @@ class Negotiation(object):
 
     @server.route('/get-negotiations', methods=['GET'])
     def ServeProtocolInformation():
-        if request.args.get("address"):
-            print("[+] Retrieving Negotiations from client: %s" %request.args.get("address"))
-
+        print("[+] Retrieving Negotiations from client: %s" %request.remote_addr)
         return jsonify(data)
 
     @server.route("/negotiation-enabled", methods=["GET"])
@@ -109,7 +113,8 @@ class Negotiation(object):
 
     @server.route('/send-status', methods=["GET"])
     def CheckInOutput():
-        if request.args.get("protocol"):
+
+        if request.args.get("protocol") and request.args.get("started"):
             print("[+] %s Server Has Been Started" %request.args.get("protocol").upper())
 
         if request.args.get("error"):
@@ -118,7 +123,10 @@ class Negotiation(object):
         if request.args.get("stop"):
             print("[+] %s Server is Stopping" %request.args.get("protocol").upper())
 
-        if request.args.get("address") and request.args.get("protocol"):
-            print("[+] %s Data Finshed Sending From Client: %s" %(request.args.get("protocol"),request.args.get("address")))
+        if request.args.get("complete") and request.args.get("protocol"):
+            print("[+] %s Data Finshed Sending From Client: %s" %(request.args.get("protocol").upper(),request.remote_addr))
+
+        if request.args.get("protocol") and request.args.get("send"):
+            print("[+] Client %s attempting to send %s data" %(request.remote_addr,request.args.get("protocol").upper()))
 
         return jsonify({200:"Success"})

@@ -92,40 +92,63 @@ def cli_parser():
     if args.h:
         parser.print_help()
         sys.exit()
-    if args.negotiation is False:
+
+    # HANDLE SERVER and CLIENT NEGOTIATION LOGIC
+    if args.negotiation:
+        # SEVER LOGIC
+        if args.server:
+            return args
+
+        # CLIENT LOGIC
+        if args.ip is None:
+            print "[*] Error: You said to act like a client, but provided no ip"
+            print "[*] Error: to connect to.  Please re-run with required info!"
+            sys.exit(1)
+
+        if args.client is not None:
+            print("(!) Negotiation Mode will enable protocols after connecting to target no need to specify")
+            sys.exit()
+
+        if args.datatype is None and args.file is None:
+            print "[*] Error: You need to tell Egress-Assess the type \
+                                    of data to send!".replace('    ', '')
+            print "[*] Error: to connect to.  Please re-run with required info!"
+            sys.exit(1)
+
+    else:
         if ((args.server == "ftp" or args.server == "sftp") or (
                 args.client == "ftp" or args.client == "sftp")) and (
                 args.username is None or args.password is None):
             print "[*] Error: FTP or SFTP connections require \
-                a username and password!".replace('    ', '')
+                    a username and password!".replace('    ', '')
             print "[*] Error: Please re-run and provide the required info!"
             sys.exit(1)
 
-    if args.client and args.ip is None:
-        print "[*] Error: You said to act like a client, but provided no ip"
-        print "[*] Error: to connect to.  Please re-run with required info!"
-        sys.exit(1)
+        if args.client and args.ip is None:
+            print "[*] Error: You said to act like a client, but provided no ip"
+            print "[*] Error: to connect to.  Please re-run with required info!"
+            sys.exit(1)
 
-    if (args.client is not None) and (args.datatype is None) and (
-            args.file is None):
-        print "[*] Error: You need to tell Egress-Assess the type \
-            of data to send!".replace('    ', '')
-        print "[*] Error: to connect to.  Please re-run with required info!"
-        sys.exit(1)
+        if (args.client is not None) and (args.datatype is None) and (
+                args.file is None):
+            print "[*] Error: You need to tell Egress-Assess the type \
+                    of data to send!".replace('    ', '')
+            print "[*] Error: to connect to.  Please re-run with required info!"
+            sys.exit(1)
 
-    if (args.client is None and args.server is None and
-            args.list_servers is None and args.list_clients is None and
-            args.list_datatypes is None):
-        print "[*] Error: You didn't tell Egress-Assess to act like \
-            a server or client!".replace('    ', '')
-        print "[*] Error: Please re-run and provide an action to perform!"
-        parser.print_help()
-        sys.exit(1)
+        if (args.client is None and args.server is None and
+                args.list_servers is None and args.list_clients is None and
+                args.list_datatypes is None):
+            print "[*] Error: You didn't tell Egress-Assess to act like \
+                    a server or client!".replace('    ', '')
+            print "[*] Error: Please re-run and provide an action to perform!"
+            parser.print_help()
+            sys.exit(1)
 
-    if args.actor is not None and args.ip is None:
-        print "[*] Error: You did not provide an IP to egress data to!"
-        print "[*] Error: Please re-run and provide an ip!"
-        sys.exit(1)
+        if args.actor is not None and args.ip is None:
+            print "[*] Error: You did not provide an IP to egress data to!"
+            print "[*] Error: Please re-run and provide an ip!"
+            sys.exit(1)
 
     return args
 

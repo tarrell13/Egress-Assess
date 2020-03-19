@@ -43,7 +43,7 @@ class Server:
             if self.smb2support:
                 server.setSMB2Support(self.smb2support)
 
-            if self.username and self.password:
+            if self.username != "null" and self.password != "null":
                 self.lmhash = compute_lmhash(self.password)
                 self.nthash = compute_nthash(self.password)
                 server.addCredential(self.username, 0, self.lmhash, self.nthash)

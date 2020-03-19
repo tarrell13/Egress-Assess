@@ -12,6 +12,7 @@ import threading
 import time
 import requests
 from common import helpers
+import json
 from common import orchestra
 from common.negotiation import Negotiation
 import re
@@ -111,15 +112,18 @@ if __name__ == "__main__":
                         threads[i] = threading.Thread(target=server.negotiatedServe,args=())
                         threads[i].start()
                         time.sleep(1)
-                        requests.get("http://localhost:5000/send-status?protocol=%s" %server_protocols[i].protocol)
+                        requests.get("http://localhost:5000/send-status?protocol=%s&started=True" %server_protocols[i].protocol)
                     else:
                         server.serve()
                         helpers.class_info()
 
-    elif cli_parsed.client is not None:
+    elif cli_parsed.client is not None or cli_parsed.negotiation and cli_parsed.ip is not None:
         # load up all supported client protocols and datatypes
         the_conductor.load_client_protocols(cli_parsed)
         the_conductor.load_datatypes(cli_parsed)
+
+        if cli_parsed.negotiation:
+            configs = json.loads(requests.get("http://%s:5000/get-negotiations" %cli_parsed.ip).content)
 
         if cli_parsed.file is None:
             # Loop through and find the requested datatype
@@ -129,21 +133,41 @@ if __name__ == "__main__":
 
                     # Once data has been generated, transmit it using the 
                     # protocol requested by the user
-                    for proto_name, proto_module in the_conductor.client_protocols.iteritems():
-                        if proto_module.protocol == cli_parsed.client.lower():
-                            proto_module.transmit(generated_data)
-                            helpers.class_info()
-                            sys.exit()
+                    if cli_parsed.negotiation:
+                        for proto_name, proto_module in the_conductor.client_protocols.iteritems():
+                            if configs[proto_module.protocol]["enabled"] == "True":
+                                requests.get("http://%s:5000/send-status?send=True&protocol=%s" %(cli_parsed.ip,proto_module.protocol))
+                                proto_module.negotiatedTransmit(generated_data,config=configs)
+                                requests.get("http://%s:5000/send-status?complete=True&protocol=%s" %(cli_parsed.ip,proto_module.protocol))
+                                time.sleep(1)
+                        sys.exit()
+                    else:
+                        for proto_name, proto_module in the_conductor.client_protocols.iteritems():
+                            if proto_module.protocol == cli_parsed.client.lower():
+                                proto_module.transmit(generated_data)
+                                helpers.class_info()
+                                sys.exit()
+
 
         else:
             with open(cli_parsed.file, 'rb') as file_data_handle:
                 file_data = file_data_handle.read()
 
-            for proto_name, proto_module in the_conductor.client_protocols.iteritems():
-                if proto_module.protocol == cli_parsed.client.lower():
-                    proto_module.transmit(file_data)
-                    helpers.class_info()
-                    sys.exit()
+            if cli_parsed.negotiation:
+                for proto_name, proto_module in the_conductor.client_protocols.iteritems():
+                    if configs[proto_module.protocol]["enabled"] == "True":
+                        requests.get("http://%s:5000/send-status?send=True&protocol=%s" % (cli_parsed.ip, proto_module.protocol))
+                        proto_module.negotiatedTransmit(file_data, config=configs)
+                        requests.get("http://%s:5000/send-status?complete=True&protocol=%s" % (
+                        cli_parsed.ip, proto_module.protocol))
+                        time.sleep(1)
+                sys.exit()
+            else:
+                for proto_name, proto_module in the_conductor.client_protocols.iteritems():
+                    if proto_module.protocol == cli_parsed.client.lower():
+                        proto_module.transmit(file_data)
+                        helpers.class_info()
+                        sys.exit()
 
         helpers.class_info()
         print "[*] Error: You either didn't provide a valid datatype or client protocol to use."

