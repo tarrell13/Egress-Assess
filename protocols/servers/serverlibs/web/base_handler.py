@@ -1,5 +1,6 @@
 import os
 import random
+import requests
 import time
 from BaseHTTPServer import BaseHTTPRequestHandler
 from common import helpers
@@ -11,10 +12,11 @@ from protocols.servers.serverlibs.web import malware_callbacks
 class GetHandler(BaseHTTPRequestHandler):
     # Some of the http server code came from Dave Kennedy's AES shell
     # over http - the server specific code
-
     # should be performing GET requests Help from
     # http://pymotw.com/2/BaseHTTPServer/
+
     def do_GET(self):
+
         if self.path in malware_callbacks.malware_uris:
             self.send_response(200)
             self.end_headers()
@@ -70,7 +72,7 @@ class GetHandler(BaseHTTPRequestHandler):
             self.wfile.write('DKCheckin good')
 
         else:
-            # 404 since we aren't serving up any pages, only receiving data
+            #404 since we aren't serving up any pages, only receiving data
             self.send_response(404)
             self.end_headers()
         return
@@ -173,7 +175,6 @@ class GetHandler(BaseHTTPRequestHandler):
 
         # All other Post requests
         else:
-
             self.send_response(404)
             self.end_headers()
 

@@ -7,6 +7,7 @@ This is the code for the web server
 import os
 import socket
 import sys
+import requests
 from protocols.servers.serverlibs.web import base_handler
 from protocols.servers.serverlibs.web import threaded_http
 from threading import Thread
@@ -16,10 +17,22 @@ class Server:
 
     def __init__(self, cli_object):
         self.protocol = "http"
+        self.arguments = cli_object
         if cli_object.server_port:
             self.port = int(cli_object.server_port)
         else:
             self.port = 80
+
+
+    def negotiatedServe(self):
+        try:
+            # bind to all interfaces
+            Thread(target=self.serve_on_port).start()
+        # handle keyboard interrupts
+        except KeyboardInterrupt:
+            sys.exit()
+
+        return
 
     def serve(self):
         try:
@@ -39,7 +52,10 @@ class Server:
                 ("0.0.0.0", self.port), base_handler.GetHandler)
             server80.serve_forever()
         except socket.error:
-            print "[*][*] Error: Port %s is currently in use!" % self.port
-            print "[*][*] Error: Please restart when port is free!\n"
-            sys.exit()
+            if self.arguments.negotiation:
+                requests.get("http://localhost:5000/send-status?error=True&protocol=%s" % self.protocol)
+            else:
+                print "[*][*] Error: Port %s is currently in use!" % self.port
+                print "[*][*] Error: Please restart when port is free!\n"
+                sys.exit()
         return

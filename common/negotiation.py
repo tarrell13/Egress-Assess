@@ -103,6 +103,10 @@ class Negotiation(object):
 
         return jsonify(data)
 
+    @server.route("/negotiation-enabled", methods=["GET"])
+    def IsEnabled():
+        return jsonify(True)
+
     @server.route('/send-status', methods=["GET"])
     def CheckInOutput():
         if request.args.get("protocol"):
@@ -113,5 +117,8 @@ class Negotiation(object):
 
         if request.args.get("stop"):
             print("[+] %s Server is Stopping" %request.args.get("protocol").upper())
+
+        if request.args.get("address") and request.args.get("protocol"):
+            print("[+] %s Data Finshed Sending From Client: %s" %(request.args.get("protocol"),request.args.get("address")))
 
         return jsonify({200:"Success"})
