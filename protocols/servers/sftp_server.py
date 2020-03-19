@@ -153,6 +153,6 @@ Myw1d5t46XP97y6Szrhcsrt15pmSKD+zLYXD26qoxKJOP9a6+A==
                 t.start()
             except KeyboardInterrupt:
                 print "[*] Shutting down SFTP server..."
-                sys.exit()
+                sys.exit(0)
 
         return

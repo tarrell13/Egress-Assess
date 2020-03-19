@@ -22,6 +22,7 @@ import struct
 import SocketServer
 import threading
 import sys
+import os
 import datetime
 from dnslib import *
 from common import helpers
@@ -125,7 +126,7 @@ class Server:
                 sys.stdout.flush()
 
         except KeyboardInterrupt:
-            pass
+            os._exit(1)
 
         finally:
             for s in self.servers:

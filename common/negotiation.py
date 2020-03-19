@@ -34,7 +34,6 @@ class Negotiation(object):
         server.name = "Egress Assess - Negotiation Mode"
         server.run(host="0.0.0.0")
 
-
     def GenerateProtocolConfigurations(self):
 
         global data
@@ -107,9 +106,11 @@ class Negotiation(object):
         print("[+] Retrieving Negotiations from client: %s" %request.remote_addr)
         return jsonify(data)
 
+    '''
     @server.route("/negotiation-enabled", methods=["GET"])
     def IsEnabled():
         return jsonify(True)
+    '''
 
     @server.route('/send-status', methods=["GET"])
     def CheckInOutput():

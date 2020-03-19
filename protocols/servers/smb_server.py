@@ -5,6 +5,7 @@ This is the code for the web server
 '''
 
 import os
+import sys
 from impacket import smbserver
 from impacket.ntlm import compute_lmhash, compute_nthash
 
@@ -55,6 +56,7 @@ class Server:
         # handle keyboard interrupts
         except KeyboardInterrupt:
             print "[!] Rage quiting, and stopping the smb server!"
+            sys.exit(0)
 
         return
 
@@ -90,4 +92,6 @@ class Server:
         # handle keyboard interrupts
         except KeyboardInterrupt:
             print "[!] Rage quiting, and stopping the smb server!"
+            sys.exit(0)
+
         return

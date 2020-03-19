@@ -39,8 +39,7 @@ class Server:
             print "[*] Starting web (http) server..."
             # bind to all interfaces
             Thread(target=self.serve_on_port).start()
-            print "[*] Web server is currently running"
-            print "[*] Type \"kill -9 " + str(os.getpid()) + "\" to stop the web server."
+            print "[*] Web server is currently running on PORT %s" %str(self.port)
         # handle keyboard interrupts
         except KeyboardInterrupt:
             print "[!] Rage quiting, and stopping the web server!"
@@ -58,4 +57,7 @@ class Server:
                 print "[*][*] Error: Port %s is currently in use!" % self.port
                 print "[*][*] Error: Please restart when port is free!\n"
                 sys.exit()
+        except KeyboardInterrupt:
+            sys.exit(0)
+
         return

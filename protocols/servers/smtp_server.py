@@ -46,6 +46,7 @@ class Server:
 
     def serve(self):
 
+        print("[*] SMTP Service Started")
         exfil_directory = os.path.join(helpers.ea_path(), "data/")
 
         if not os.path.isdir(exfil_directory):
@@ -62,6 +63,6 @@ class Server:
             asyncore.loop()
         except KeyboardInterrupt:
             print "[*] Shutting down SMTP server..."
-            sys.exit()
+            sys.exit(0)
 
         return

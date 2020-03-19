@@ -11,6 +11,8 @@ import sys
 import threading
 import time
 import requests
+import os
+from signal import signal, SIGINT
 from common import helpers
 import json
 from common import orchestra
@@ -35,17 +37,17 @@ def parse_protocols(arguments):
 
     return server_protocols
 
+def handler(signal_received,frame):
+    print("[*] Exiting Program")
+    os._exit(1)
+    sys.exit(0)
 
 if __name__ == "__main__":
 
     logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-
     helpers.title_screen()
-
     cli_parsed = helpers.cli_parser()
-
     the_conductor = orchestra.Conductor()
-
 
     # Check if only listing supported server/client protocols or datatypes
     if cli_parsed.list_servers:
@@ -94,13 +96,10 @@ if __name__ == "__main__":
 
         # Check if server module is given threat actor vs. normal server
         for actor_path, actor_mod in the_conductor.actor_modules.iteritems():
-
             # If actor module is what is used, search for the server requirement
             # and load that
             if actor_mod.cli == cli_parsed.server.lower():
-
                 for full_path, server_actor in the_conductor.server_protocols.iteritems():
-
                     if server_actor.protocol.lower() == actor_mod.server_requirement:
                         server_actor.serve()
 
@@ -114,8 +113,13 @@ if __name__ == "__main__":
                         time.sleep(1)
                         requests.get("http://localhost:5000/send-status?protocol=%s&started=True" %server_protocols[i].protocol)
                     else:
-                        server.serve()
-                        helpers.class_info()
+                        threads[i] = threading.Thread(target=server.serve)
+                        threads[i].start()
+
+        print("[+] Services Started")
+        while True:
+            if KeyboardInterrupt:
+                signal(SIGINT, handler)
 
     elif cli_parsed.client is not None or cli_parsed.negotiation and cli_parsed.ip is not None:
         # load up all supported client protocols and datatypes

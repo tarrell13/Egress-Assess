@@ -85,4 +85,5 @@ class Server:
 
         print "[*] ICMP server/sniffer started!"
         sniff(prn=self.customAction)
+
         return

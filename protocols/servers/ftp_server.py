@@ -109,5 +109,7 @@ class Server:
             print "[*] Error: The directory you provided may not exist!"
             print "[*] Error: Please re-run with a valid FTP directory."
             sys.exit()
+        except KeyboardInterrupt:
+            sys.exit(0)
 
 
