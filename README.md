@@ -67,4 +67,27 @@ How the Protocols Attempt Exfil
 
 - DNS_Resolved - Data and files are broken up into bytes and then converted to base64. The data is then chunked up and used as a part of a DNS request to resolve a subdomain. <encoded_data>.domain.com. For this to work an NS record for the domain needs to be setup for the EgressAssess server. All of the DNS requests are made to the systems set nameserver and ultimately reach the EgressAssess server that was previously setup. The EgressAssess server takes the data section from each request and puts the file back together.
 
+Automation Feature
+-----
 
+Added functionality in order to completely automate the testing. When configuring the server protocols, utilize the '--negotiation' flag to configure the 
+server to ingest the negotiations.conf file in order to configure the services. The client will then connect to the server and retrieve the configurations
+needed for automating the test.
+
+***Note: At the moment I have only tweaked the python version of the tool to implement the feature. Wil most likely
+update the powershell script to just have negotiation options for the client.***
+
+Server Syntax:
+```
+python Egress-Assess.py --server smb,https,ftp --negotiation
+```
+![image](./screenshots/server-starting.png)
+
+
+Client Syntax:
+
+```
+python Egress-Assess.py --negotiation --ip <address> --datatype ssn
+```
+
+![image](./screenshots/client-completion.png)
