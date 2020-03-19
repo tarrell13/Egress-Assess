@@ -53,6 +53,22 @@ class Server:
                     pass
         return
 
+    def negotiatedServe(self):
+
+        self.loot_path = os.path.join(helpers.ea_path(), "data") + "/"
+        # Check to make sure the agent directory exists, and a loot
+        # directory for the agent.  If not, make them
+        if not os.path.isdir(self.loot_path):
+            os.makedirs(self.loot_path)
+
+        # Get the date info
+        current_date = time.strftime("%m/%d/%Y")
+        current_time = time.strftime("%H:%M:%S")
+        self.file_name = current_date.replace("/", "") + \
+                         "_" + current_time.replace(":", "") + "text_data.txt"
+
+        sniff(prn=self.customAction)
+
     def serve(self):
 
         self.loot_path = os.path.join(helpers.ea_path(), "data") + "/"

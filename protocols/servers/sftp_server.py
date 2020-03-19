@@ -10,6 +10,7 @@ base code came from - https://searchcode.com/codesearch/raw/53300304/
 import os
 import paramiko
 import socket
+import requests
 import sys
 import threading
 import time
@@ -87,6 +88,37 @@ Myw1d5t46XP97y6Szrhcsrt15pmSKD+zLYXD26qoxKJOP9a6+A==
             user = usermap[username]
             os.system("svn commit -m 'committing user session for %s' %s" % (username, root_dir + "/" + user.home))
         return
+
+    def negotiatedServe(self):
+
+        loot_path = os.path.join(helpers.ea_path(), "data") + "/"
+        # Check to make sure the agent directory exists, and a loot
+        # directory for the agent.  If not, make them
+        if not os.path.isdir(loot_path):
+            os.makedirs(loot_path)
+
+        user_map = [sftp_classes.User(
+            username=self.username, password=self.password, chroot=False), ]
+
+        try:
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.bind(('0.0.0.0', self.port))
+            server_socket.listen(10)
+        except socket.error:
+            requests.get("http://localhost:5000/send-status?error=True&protocol=%s" %self.protocol)
+            sys.exit()
+
+        while True:
+            try:
+                client, addr = server_socket.accept()
+                t = threading.Thread(target=self.accept_client, args=[
+                    client, addr, self.sftp_directory, user_map,
+                    self.rsa_key, self.password])
+                t.daemon = True
+                t.start()
+            except KeyboardInterrupt:
+                sys.exit()
+
 
     def serve(self):
 

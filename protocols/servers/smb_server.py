@@ -12,6 +12,7 @@ class Server:
 
     def __init__(self, cli_object):
         self.protocol = "smb"
+
         if cli_object.server_port:
            self.port = int(cli_object.server_port)
         else:
@@ -26,6 +27,36 @@ class Server:
             self.password=cli_object.password
             self.lmhash=compute_lmhash(self.password)
             self.nthash=compute_nthash(self.password)
+
+    def negotiatedServe(self):
+        try:
+            # current directory
+            exfil_directory = os.path.join(os.getcwd(), "data")
+            loot_path = exfil_directory + "/"
+
+            # Check to make sure the agent directory exists, and a loot
+            # directory for the agent.  If not, make them
+            if not os.path.isdir(loot_path):
+                os.makedirs(loot_path)
+
+            server = smbserver.SimpleSMBServer('0.0.0.0', self.port)
+            if self.smb2support:
+                server.setSMB2Support(self.smb2support)
+
+            if self.username and self.password:
+                self.lmhash = compute_lmhash(self.password)
+                self.nthash = compute_nthash(self.password)
+                server.addCredential(self.username, 0, self.lmhash, self.nthash)
+
+            server.addShare("DATA", "data/", "Egress-Assess data share")
+
+            # Rock and roll
+            server.start()
+        # handle keyboard interrupts
+        except KeyboardInterrupt:
+            print "[!] Rage quiting, and stopping the smb server!"
+
+        return
 
     def serve(self):
         try:
@@ -44,7 +75,7 @@ class Server:
                 server.setSMB2Support(self.smb2support)
 
             if self.username and self.password:
-                server.addCredential(self.username, 0, self.lmhash, self.nthash)
+                server.addCredential(self.username,0,self.lmhash,self.nthash)
 
             server.addShare("DATA", "data/", "Egress-Assess data share")
 

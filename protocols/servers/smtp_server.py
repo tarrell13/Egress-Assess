@@ -9,6 +9,7 @@ import asyncore
 import os
 import socket
 import sys
+import requests
 from common import helpers
 from protocols.servers.serverlibs.smtp import smtp_class
 
@@ -23,14 +24,32 @@ class Server:
         else:
             self.port = 25
 
+    def negotiatedServe(self):
+
+        exfil_directory = os.path.join(helpers.ea_path(), "data/")
+
+        if not os.path.isdir(exfil_directory):
+            os.makedirs(exfil_directory)
+
+        try:
+            smtp_server = smtp_class.CustomSMTPServer(('0.0.0.0', self.port), None)
+        except socket.error:
+            requests.get("http://localhost:5000/send-status?error=True&protocol=%s" %self.protocol)
+
+        try:
+            asyncore.loop()
+        except KeyboardInterrupt:
+            requests.get("http://localhost:5000/send-status?stop=True&protocol=%s" %self.protocol)
+            sys.exit()
+
+        return
+
     def serve(self):
 
         exfil_directory = os.path.join(helpers.ea_path(), "data/")
 
         if not os.path.isdir(exfil_directory):
                 os.makedirs(exfil_directory)
-
-        print "[*] Started SMTP server..."
 
         try:
             smtp_server = smtp_class.CustomSMTPServer(('0.0.0.0', self.port), None)

@@ -3,6 +3,9 @@
 import flask
 from flask import request, jsonify
 import random
+import json
+import sys
+import os
 import logging
 import string
 
@@ -19,66 +22,74 @@ class Negotiation(object):
         self.protocols = protocols
         self.server = None
 
-        data = {
-            "https": None,
-            "http": None,
-            "smtp": None,
-            "icmp": False,
-            "dns": False,
-            "ftp": {
-                "port": None,
-                "username": "ftp_user",
-                "password": None
-            },
-            "smb": {
-                "port": None,
-                "username": "smb_user",
-                "password": None
-            },
-            "sftp": {
-                "port": None,
-                "username": "sftp_user",
-                "password": None
-            }
-        }
-
-
+        if self.arguments.negotiation:
+            if os.path.isfile("negotiations.conf"):
+                data = json.loads(open("negotiations.conf","r").read())
         return
 
     def start(self):
-        self.GenerateServerProtocolInformation()
+        self.GenerateProtocolConfigurations()
         log = logging.getLogger('werkzeug')
         log.disabled = True
         server.name = "Egress Assess - Negotiation Mode"
         server.run(host="0.0.0.0")
 
-    def GenerateServerProtocolInformation(self):
+
+    def GenerateProtocolConfigurations(self):
+
         global data
 
         for proto in self.protocols:
-
             password = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(12)])
 
             # Configure each protocol values depending Protocols being tested
-            if proto.protocol.lower() == "https":
-                data["https"] = proto.port
-            elif proto.protocol.lower() == "http":
-                data["http"] = proto.port
-            elif proto.protocol.lower() == "smtp":
-                data["smtp"] = proto.port
-            elif proto.protocol.lower() == "icmp":
-                data["icmp"] = True
-            elif proto.protocol.lower() == "dns":
-                data["dns"] = True
-            elif proto.protocol.lower() == "ftp":
-                data["ftp"]["port"] = proto.port
-                data["ftp"]["password"] = password
+            if proto.protocol.lower() == "ftp":
+
+                if data["ftp"]["password"] == "null":
+                    data["ftp"]["password"] = password
+
+                proto.username = data["ftp"]["username"]
+                proto.password = data["ftp"]["password"]
+                proto.port = int(data["ftp"]["port"])
+                data["ftp"]["enabled"] = "True"
+
             elif proto.protocol.lower() == "smb":
-                data["smb"]["port"] = proto.port
-                data["smb"]["password"] = password
+
+                if data["smb"]["password"] == "null":
+                    data["smb"]["password"] = password
+                if data["smb"]["smb2"] == "True":
+                    proto.smb2support = True
+
+                proto.username = data["smb"]["username"]
+                proto.password = data["smb"]["password"]
+                proto.port = int(data["smb"]["port"])
+                data["smb"]["enabled"] = "True"
+
             elif proto.protocol.lower() == "sftp":
-                data["sftp"]["port"] = proto.port
-                data["sftp"]["password"] = password
+                if data["sftp"]["password"] == "null":
+                    data["sftp"]["password"] = password
+                proto.username = data["sftp"]["username"]
+                proto.password = data["sftp"]["password"]
+                proto.port = int(data["sftp"]["port"])
+                data["sftp"]["enabled"] = "True"
+
+            elif proto.protocol.lower() == "http":
+                proto.port = int(data["http"]["port"])
+                data["http"]["enabled"] = "True"
+
+            elif proto.protocol.lower() == "https":
+                proto.port = int(data["https"]["port"])
+                data["https"]["enabled"] = "True"
+
+            elif proto.protocol.lower() == "icmp":
+                data["icmp"]["enabled"] = "True"
+
+            elif proto.protocol.lower() == "dns":
+                data["dns"]["enabled"] = "True"
+
+            elif proto.protocol.lower() == "smtp":
+                proto.port = int(data["smtp"]["port"])
+                data["smtp"]["enabled"] = "True"
 
         return
 
@@ -87,13 +98,20 @@ class Negotiation(object):
 
     @server.route('/get-negotiations', methods=['GET'])
     def ServeProtocolInformation():
-        client_address = request.args.get("address")
-        print("[+] Retrieving Negotiations from client: %s" %client_address)
+        if request.args.get("address"):
+            print("[+] Retrieving Negotiations from client: %s" %request.args.get("address"))
+
         return jsonify(data)
 
-    @server.route('/checkin-status', methods=["GET"])
+    @server.route('/send-status', methods=["GET"])
     def CheckInOutput():
         if request.args.get("protocol"):
             print("[+] %s Server Has Been Started" %request.args.get("protocol").upper())
+
+        if request.args.get("error"):
+            print("(!) Issues Start %s Server...skipping" %request.args.get("protocol").upper())
+
+        if request.args.get("stop"):
+            print("[+] %s Server is Stopping" %request.args.get("protocol").upper())
 
         return jsonify({200:"Success"})

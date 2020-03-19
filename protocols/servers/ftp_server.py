@@ -7,6 +7,10 @@ This is the code for the ftp server
 import os
 import socket
 import sys
+import requests
+import json
+import logging
+from pyftpdlib.log import config_logging
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -26,6 +30,48 @@ class Server:
 	    self.ip = cli_object.ip
 	else:
 	    self.ip = None
+
+
+    def negotiatedServe(self):
+        # current directory
+        config_logging(level=logging.ERROR)
+
+        exfil_directory = os.path.join(os.getcwd(), "data")
+        loot_path = exfil_directory + "/"
+
+        # Check to make sure the agent directory exists, and a loot
+        # directory for the agent.  If not, make them
+        if not os.path.isdir(loot_path):
+            os.makedirs(loot_path)
+
+        try:
+            authorizer = DummyAuthorizer()
+            authorizer.add_user(
+                self.username, self.password,
+                loot_path, perm="elradfmwM")
+
+            handler = FTPHandler
+            handler.authorizer = authorizer
+
+
+            # Define a customized banner (string returned when client connects)
+            handler.banner = "Connecting to Egress-Assess's FTP server!"
+            # Define public address and  passive ports making NAT configurations more predictable
+            handler.masquerade_address = self.ip
+            handler.passive_ports = range(60000, 60100)
+
+            try:
+                server = FTPServer(('', self.port), handler)
+                server.serve_forever()
+            except socket.error:
+                requests.get("http://localhost:5000/send-status?error=True&protocol=%s" %self.protocol)
+                sys.exit()
+        except ValueError:
+            print "[*] Error: The directory you provided may not exist!"
+            print "[*] Error: Please re-run with a valid FTP directory."
+            sys.exit()
+
+        return
 
     def serve(self):
         # current directory
@@ -63,4 +109,5 @@ class Server:
             print "[*] Error: The directory you provided may not exist!"
             print "[*] Error: Please re-run with a valid FTP directory."
             sys.exit()
-        return
+
+

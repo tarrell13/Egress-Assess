@@ -9,6 +9,7 @@
 import logging
 import sys
 import threading
+import time
 import requests
 from common import helpers
 from common import orchestra
@@ -103,14 +104,14 @@ if __name__ == "__main__":
                         server_actor.serve()
 
         threads = [None] * len(server_protocols)
-
         for i in range(len(server_protocols)):
             for full_path, server in the_conductor.server_protocols.iteritems():
                 if server.protocol == server_protocols[i].protocol:
                     if cli_parsed.negotiation:
                         threads[i] = threading.Thread(target=server.negotiatedServe,args=())
                         threads[i].start()
-                        requests.get("http://localhost:5000/checkin-status?protocol=%s" %server_protocols[i].protocol)
+                        time.sleep(1)
+                        requests.get("http://localhost:5000/send-status?protocol=%s" %server_protocols[i].protocol)
                     else:
                         server.serve()
                         helpers.class_info()

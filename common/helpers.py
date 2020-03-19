@@ -92,14 +92,14 @@ def cli_parser():
     if args.h:
         parser.print_help()
         sys.exit()
-
-    if ((args.server == "ftp" or args.server == "sftp") or (
-            args.client == "ftp" or args.client == "sftp")) and (
-            args.username is None or args.password is None):
-        print "[*] Error: FTP or SFTP connections require \
-            a username and password!".replace('    ', '')
-        print "[*] Error: Please re-run and provide the required info!"
-        sys.exit(1)
+    if args.negotiation is False:
+        if ((args.server == "ftp" or args.server == "sftp") or (
+                args.client == "ftp" or args.client == "sftp")) and (
+                args.username is None or args.password is None):
+            print "[*] Error: FTP or SFTP connections require \
+                a username and password!".replace('    ', '')
+            print "[*] Error: Please re-run and provide the required info!"
+            sys.exit(1)
 
     if args.client and args.ip is None:
         print "[*] Error: You said to act like a client, but provided no ip"
