@@ -17,12 +17,12 @@ apt-get -y install python-pyasn1
 echo "[*] Installing dnspython"
 apt-get -y install python-dnspython
 echo "[*] Installing impacket"
-wget https://pypi.python.org/packages/source/i/impacket/impacket-0.9.13.tar.gz
-tar -xvf impacket-0.9.13.tar.gz
-cd impacket-0.9.13
+wget https://pypi.python.org/packages/source/i/impacket/impacket-0.9.20.tar.gz
+tar -xvf impacket-0.9.20.tar.gz
+cd impacket-0.9.20
 python setup.py install
 cd ..
-rm -rf impacket-0.9.13
+rm -rf impacket-0.9.20
 echo "[*] Installing pyftpdlib..."
 git clone https://github.com/giampaolo/pyftpdlib.git
 cd pyftpdlib
